@@ -13,6 +13,10 @@ public class MazeGenerator : MonoBehaviour
     public GameObject[] tiles;
     public GameObject player;
     public GameObject enemy;
+    public GameObject Gun;
+    public GameObject Sphere;
+    public GameObject Exit;
+    public GameObject Boost;
 
     const int N = 1, E = 2, S = 4, W = 8;
     Dictionary<Vector2, int> cell_walls = new Dictionary<Vector2, int>();
@@ -32,8 +36,22 @@ public class MazeGenerator : MonoBehaviour
 
         MakeMaze();
 
-        // Spawn player at cell (5, 1)
-        Instantiate(player, CellToWorldPosition(1, 1) + Vector3.up, Quaternion.identity);
+        // Spawn player
+        Instantiate(player, new Vector3(5,1,5), Quaternion.identity);
+
+        // Spawn Gun
+        Instantiate(Gun, new Vector3(45,2,45), Quaternion.identity);
+        Instantiate(Sphere, new Vector3(45,2,45), Quaternion.identity);
+
+        // Spawn Exit
+        Instantiate(Exit, new Vector3(95,2,95), Quaternion.identity);
+
+        // Spawn Boosts
+        Instantiate(Boost, new Vector3(25,2,15), Quaternion.identity);
+        Instantiate(Boost, new Vector3(35,2,5), Quaternion.identity);
+        Instantiate(Boost, new Vector3(55,2,65), Quaternion.identity);
+        Instantiate(Boost, new Vector3(75,2,25), Quaternion.identity);
+        Instantiate(Boost, new Vector3(85,2,45), Quaternion.identity);
 
         // Spawn enemies at different maze locations
         PlaceEnemyAtCell(2, 2);
