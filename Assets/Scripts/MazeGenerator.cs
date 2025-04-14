@@ -11,27 +11,18 @@ using UnityEngine.AI;
 public class MazeGenerator : MonoBehaviour
 {
     public GameObject[] tiles;
-
     public GameObject player;
+    public GameObject enemy;
 
-    const int N = 1;
-    const int E = 2;
-    const int S = 4;
-    const int W = 8;
-
+    const int N = 1, E = 2, S = 4, W = 8;
     Dictionary<Vector2, int> cell_walls = new Dictionary<Vector2, int>();
 
-    float tile_size = 10;
-    public int width = 10;   // Width of map  
-    public int height = 10;  // Height of map
+    public float tile_size = 10f;
+    public int width = 10;
+    public int height = 10;
 
     List<List<int>> map = new List<List<int>>();
 
-    
-
-
-
-    // Start is called before the first frame update
     void Start()
     {
         cell_walls[new Vector2(0, -1)] = N;
@@ -41,31 +32,24 @@ public class MazeGenerator : MonoBehaviour
 
         MakeMaze();
 
-        GameObject p = GameObject.Instantiate(player);
-        p.transform.position = new Vector3(2.91f, 1f, 4.6f);
+        // Spawn player at cell (5, 1)
+        Instantiate(player, CellToWorldPosition(1, 1) + Vector3.up, Quaternion.identity);
+
+        // Spawn enemies at different maze locations
+        PlaceEnemyAtCell(2, 2);
+        PlaceEnemyAtCell(3, 7);
+        PlaceEnemyAtCell(6, 4);
+        PlaceEnemyAtCell(8, 8);
+        PlaceEnemyAtCell(1, 5);
+        PlaceEnemyAtCell(7, 0);
+        PlaceEnemyAtCell(4, 3);
     }
-
-    private List<Vector2> CheckNeighbors(Vector2 cell, List<Vector2> unvisited) {
-        // Returns a list of cell's unvisited neighbors
-        List<Vector2> list = new List<Vector2>();
-
-        foreach (var n in cell_walls.Keys)
-        {
-            if (unvisited.IndexOf((cell + n)) != -1) { 
-                list.Add(cell+ n);
-            }
-                    
-        }
-        return list;
-    }
-
 
     private void MakeMaze()
     {
         List<Vector2> unvisited = new List<Vector2>();
         List<Vector2> stack = new List<Vector2>();
 
-        // Fill the map with #15 tiles
         for (int i = 0; i < width; i++)
         {
             map.Add(new List<int>());
@@ -74,60 +58,70 @@ public class MazeGenerator : MonoBehaviour
                 map[i].Add(N | E | S | W);
                 unvisited.Add(new Vector2(i, j));
             }
-
         }
 
         Vector2 current = new Vector2(0, 0);
-
         unvisited.Remove(current);
 
-        while (unvisited.Count > 0) {
+        while (unvisited.Count > 0)
+        {
             List<Vector2> neighbors = CheckNeighbors(current, unvisited);
 
             if (neighbors.Count > 0)
             {
-                Vector2 next = neighbors[UnityEngine.Random.RandomRange(0, neighbors.Count)];
+                Vector2 next = neighbors[UnityEngine.Random.Range(0, neighbors.Count)];
                 stack.Add(current);
 
                 Vector2 dir = next - current;
 
-                int current_walls = map[(int)current.x][(int)current.y] - cell_walls[dir];
-
-                int next_walls = map[(int)next.x][(int)next.y] - cell_walls[-dir];
-
-                map[(int)current.x][(int)current.y] = current_walls;
-
-                map[(int)next.x][(int)next.y] = next_walls;
+                map[(int)current.x][(int)current.y] -= cell_walls[dir];
+                map[(int)next.x][(int)next.y] -= cell_walls[-dir];
 
                 current = next;
                 unvisited.Remove(current);
-
             }
-            else if (stack.Count > 0) { 
+            else if (stack.Count > 0)
+            {
                 current = stack[stack.Count - 1];
                 stack.RemoveAt(stack.Count - 1);
-            
             }
-
-            
         }
 
         for (int i = 0; i < width; i++)
         {
-            
             for (int j = 0; j < height; j++)
             {
-                GameObject tile = GameObject.Instantiate(tiles[map[i][j]]);
-                tile.transform.parent = gameObject.transform;
+                GameObject tile = Instantiate(tiles[map[i][j]]);
+                tile.transform.parent = transform;
+                tile.transform.position = CellToWorldPosition(i, j);
+                tile.name = $"Tile {i} {j}";
 
-                tile.transform.Translate(new Vector3 (j*tile_size, 0, i * tile_size));
-                tile.name += " " + i.ToString() + ' ' + j.ToString();
+                // ✅ Build navmesh on each tile again
                 tile.GetComponentInChildren<NavMeshSurface>().BuildNavMesh();
-               
             }
-
         }
+    }
 
+    private List<Vector2> CheckNeighbors(Vector2 cell, List<Vector2> unvisited)
+    {
+        List<Vector2> list = new List<Vector2>();
+        foreach (var n in cell_walls.Keys)
+        {
+            if (unvisited.Contains(cell + n))
+                list.Add(cell + n);
+        }
+        return list;
+    }
+
+    private Vector3 CellToWorldPosition(int row, int col)
+    {
+        return new Vector3(col * tile_size, 0, row * tile_size);
+    }
+
+    private void PlaceEnemyAtCell(int row, int col)
+    {
+        Vector3 pos = CellToWorldPosition(row, col) + Vector3.up;
+        Instantiate(enemy, pos, Quaternion.identity);
     }
 
     
